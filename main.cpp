@@ -36,12 +36,15 @@ class Graph{
         void addEdge(char from, char to, int weight){
             int fromIndex = getNodeIndex(from); // get the index of the first node
             int toIndex = getNodeIndex(to); // get the index of the second node
-            if(fromIndex != -1 && toIndex != -1){ //make sure both nodes are in the graph
+            if(fromIndex != -1 && toIndex != -1){ // make sure both nodes are in the graph
 
                 // add the index of second node and weight to the list of edges of the first node
                 edges.at(fromIndex).push_back({toIndex, weight});
+                edges.at(toIndex).push_back({fromIndex, weight});
             }
         }
+
+        
 
         void printGraph(){
             for (int i{0}; i < vertices.size(); i++){
@@ -52,9 +55,6 @@ class Graph{
                 cout << endl;
             }
         }
-
-        
-
 };
 
 int main(){
