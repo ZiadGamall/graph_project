@@ -41,22 +41,22 @@ class Graph{
 
                 // add the index of second node and weight to the list of edges of the first node
                 edges.at(fromIndex).push_back({toIndex, weight});
-                edges.at(toIndex).push_back({fromIndex, weight});
             }
         }
 
         void mst(char start) {
-            // Priority queue to store edges in ascending order (to, weight)
+            // Priority queue to store edges in ascending order (weight, to)
             priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
 
             vector<bool> visited(vertices.size(), false); // Visited nodes
-            vector<pair<pair<int, int>, int>> mstEdges;  // Edges in the MST ((from, to), weight)
-            int totalWeight = 0;                         // Total weight of the MST
+            vector<pair<pair<int, int>, int>> mstEdges;   // Edges in the MST ((from, to), weight)
+            vector<int> parent(vertices.size(), -1);      // Parent nodes
+            int totalWeight = 0;                          // Total weight of the MST
 
             int startIndex = getNodeIndex(start); // Get the starting node index
 
             // Check if the starting node is in the graph
-            if(startIndex == -1){
+            if (startIndex == -1) {
                 cout << "The node is not in the graph" << endl;
                 return;
             }
@@ -65,40 +65,29 @@ class Graph{
 
             // Add all edges of the starting node to the priority queue
             for (auto edge : edges[startIndex]) {
-                pq.push({edge.first, edge.second}); // Push (weight, to)
+                pq.push({edge.second, edge.first}); // Push (weight, to)
+                parent[edge.first] = startIndex;    // Set the parent of the connected node to the start node
             }
 
             // Main loop to process the priority queue
             while (!pq.empty()) {
                 // Get the smallest edge
-                int nextIndex = pq.top().first;   // The node this edge leads to
-                int weight = pq.top().second;    // Weight of the edge
-                pq.pop();                       // Remove the edge from the Q
+                int weight = pq.top().first;  // Weight of the edge
+                int nextIndex = pq.top().second; // The node this edge leads to
+                pq.pop(); // Remove the edge from the queue
 
                 if (visited[nextIndex]) continue; // Skip if already visited
-                visited[nextIndex] = true;       // Mark the node as visited
-
-                // Find the parent of this node (nextIndex) by searching for the edge in the priority queue
-                int parentIndex = -1;
-                for (auto edge : edges[nextIndex]) {
-
-                    // The graph is undirected, so we search for the parent node by looking for a node that's visited and has the same weight as the child
-                    if (visited[edge.first] && edge.second == weight) {
-                        parentIndex = edge.first;
-                        break;
-                    }
-                }
+                visited[nextIndex] = true;        // Mark the node as visited
 
                 // Add the edge to the MST and update total weight
-                if (parentIndex != -1) {
-                    mstEdges.push_back({{parentIndex, nextIndex}, weight}); // Store the edge ((from, to), weight)
-                    totalWeight += weight; // Add the weight
-                }
+                mstEdges.push_back({{parent[nextIndex], nextIndex}, weight}); // Store the edge ((from, to), weight)
+                totalWeight += weight; // Add the weight
 
                 // Push all edges of the newly added node to the queue
                 for (auto edge : edges[nextIndex]) {
                     if (!visited[edge.first]) {
-                        pq.push({edge.first, edge.second});
+                        pq.push({edge.second, edge.first});
+                        parent[edge.first] = nextIndex; // Update parent of the neighbor
                     }
                 }
             }
@@ -110,6 +99,7 @@ class Graph{
             }
             cout << "Total weight of MST: " << totalWeight << endl;
         }
+
 
         void printGraph(){
             for (int i{0}; i < vertices.size(); i++){
