@@ -47,7 +47,13 @@ class Graph{
             }
         }
 
-        void mst(char start) {
+        void mst(char start, const string& outputFilename) {
+            ofstream outFile(outputFilename, ios::app); // Open file in append mode
+            if (!outFile.is_open()) {
+                cout << "Failed to open the output file for MST." << endl;
+                return;
+            }
+
             // Priority queue to store edges in ascending order (weight, to)
             priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
 
@@ -60,7 +66,8 @@ class Graph{
 
             // Check if the starting node is in the graph
             if (startIndex == -1) {
-                cout << "The node is not in the graph" << endl;
+                outFile << "The node is not in the graph" << endl;
+                outFile.close();
                 return;
             }
 
@@ -74,15 +81,13 @@ class Graph{
 
             // Main loop to process the priority queue
             while (!pq.empty()) {
-                // Get the smallest edge
                 int weight = pq.top().first;  // Weight of the edge
                 int nextIndex = pq.top().second; // The node this edge leads to
-                pq.pop(); // Remove the edge from the queue
+                pq.pop();
 
                 if (visited[nextIndex]) continue; // Skip if already visited
                 visited[nextIndex] = true;        // Mark the node as visited
 
-                // Add the edge to the MST and update total weight
                 mstEdges.push_back({{parent[nextIndex], nextIndex}, weight}); // Store the edge ((from, to), weight)
                 totalWeight += weight; // Add the weight
 
@@ -95,70 +100,74 @@ class Graph{
                 }
             }
 
-            // Output the MST
-            cout << "Edges in the MST:" << endl;
+            // Write MST to file
+            outFile << "Edges in the MST:" << endl;
             for (auto edge : mstEdges) {
-                cout << vertices[edge.first.first].id << " - " << vertices[edge.first.second].id << " with weight " << edge.second << endl;
+                outFile << vertices[edge.first.first].id << " - " << vertices[edge.first.second].id 
+                        << " with weight " << edge.second << endl;
             }
-            cout << "Total weight of MST: " << totalWeight << endl;
+            outFile << "Total weight of MST: " << totalWeight << endl;
+            outFile << "===========================" << endl;
+
+            outFile.close(); // Close the file
         }
 
-        vector<int> shortestPath(char source) {
-            // Set to act as a priority queue: stores pairs of (distance, node index), sorted by distance
-            set<pair<int, int>> st;
-            // Distance vector initialized to a large value (INT_MAX) to represent infinity
-            vector<int> distance(vertices.size(), INT_MAX);
 
-            // Get the index of the source node
+        vector<int> shortestPath(char source, const string& outputFilename) {
+            ofstream outFile(outputFilename, ios::app); // Open file in append mode
+            if (!outFile.is_open()) {
+                cout << "Failed to open the output file for Shortest Path." << endl;
+                return {};
+            }
+
+            set<pair<int, int>> st; // Acts as a priority queue (distance, node index)
+            vector<int> distance(vertices.size(), INT_MAX); // Distance to each node (initialized to infinity)
+
             int sourceIndex = getNodeIndex(source);
             if (sourceIndex == -1) {
-                // If source node is not in the graph, print an error and return the distance vector
-                cout << "Couldn't find the source in the graph" << endl;
+                outFile << "Couldn't find the source in the graph" << endl;
+                outFile.close();
                 return distance;
             }
 
-            // Initialize the source node with a distance of 0
-            st.insert({0, sourceIndex});
+            st.insert({0, sourceIndex}); // Initialize the source node with distance 0
             distance[sourceIndex] = 0;
 
-            // Main loop: process nodes in increasing order of distance
             while (!st.empty()) {
-                // Extract the node with the smallest distance
                 auto itr = *(st.begin());
                 int weight = itr.first;  // Current shortest distance to this node
                 int node = itr.second;   // Node index
                 st.erase(itr);
 
-                // Relax all edges from the current node
                 for (auto edge : edges[node]) {
                     int nextNode = edge.first;       // Neighboring node
                     int nextWeight = edge.second;   // Edge weight
 
-                    // Check if a shorter path to nextNode is found
                     if (weight + nextWeight < distance[nextNode]) {
-                        // Remove the old distance entry from the set (if exists)
                         if (distance[nextNode] != INT_MAX) {
                             st.erase({distance[nextNode], nextNode});
                         }
-
-                        // Update the distance to nextNode and add it back to the set
                         distance[nextNode] = weight + nextWeight;
                         st.insert({distance[nextNode], nextNode});
                     }
                 }
             }
 
-            // Output the shortest path distances
+            // Write Shortest Path to file
+            outFile << "Shortest paths from " << source << ":" << endl;
             for (int i = 0; i < distance.size(); i++) {
                 if (distance[i] == INT_MAX) {
-                    cout << "Distance from " << source << " to " << vertices[i].id << " - Unreachable" << endl;
+                    outFile << source << " -> " << vertices[i].id << ": Unreachable" << endl;
                 } else {
-                    cout << "Distance from " << source << " to " << vertices[i].id << " - " << distance[i] << endl;
+                    outFile << source << " -> " << vertices[i].id << ": " << distance[i] << endl;
                 }
             }
+            outFile << "===========================" << endl;
 
+            outFile.close(); // Close the file
             return distance;
         }
+
 
 
 
@@ -201,10 +210,8 @@ int main(){
     }
 
     graph.printGraph();
-    cout << "===========================" << endl;
-    graph.mst('A');
-    cout << "===========================" << endl;
-    graph.shortestPath('A');
+    graph.mst('A', "mst.txt");
+    graph.shortestPath('A', "shortest path.txt");
 
     return 0;
 }
