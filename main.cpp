@@ -4,6 +4,8 @@
 #include<vector>
 #include<sstream>
 #include<queue>
+#include<set>
+#include<limits>
 
 using namespace std;
 
@@ -19,6 +21,7 @@ class Graph{
     public:
         vector<Node> vertices;
         vector<vector<pair<int, int >>> edges; // neighbor, weight: for the edges represented by a list of pairs for each node
+        
         void addNode(char id){
             vertices.push_back(Node(id)); // adding the node to the graph
             edges.push_back(vector<pair<int, int>>()); // initialising the list of pairs of each node
@@ -100,6 +103,64 @@ class Graph{
             cout << "Total weight of MST: " << totalWeight << endl;
         }
 
+        vector<int> shortestPath(char source) {
+            // Set to act as a priority queue: stores pairs of (distance, node index), sorted by distance
+            set<pair<int, int>> st;
+            // Distance vector initialized to a large value (INT_MAX) to represent infinity
+            vector<int> distance(vertices.size(), INT_MAX);
+
+            // Get the index of the source node
+            int sourceIndex = getNodeIndex(source);
+            if (sourceIndex == -1) {
+                // If source node is not in the graph, print an error and return the distance vector
+                cout << "Couldn't find the source in the graph" << endl;
+                return distance;
+            }
+
+            // Initialize the source node with a distance of 0
+            st.insert({0, sourceIndex});
+            distance[sourceIndex] = 0;
+
+            // Main loop: process nodes in increasing order of distance
+            while (!st.empty()) {
+                // Extract the node with the smallest distance
+                auto itr = *(st.begin());
+                int weight = itr.first;  // Current shortest distance to this node
+                int node = itr.second;   // Node index
+                st.erase(itr);
+
+                // Relax all edges from the current node
+                for (auto edge : edges[node]) {
+                    int nextNode = edge.first;       // Neighboring node
+                    int nextWeight = edge.second;   // Edge weight
+
+                    // Check if a shorter path to nextNode is found
+                    if (weight + nextWeight < distance[nextNode]) {
+                        // Remove the old distance entry from the set (if exists)
+                        if (distance[nextNode] != INT_MAX) {
+                            st.erase({distance[nextNode], nextNode});
+                        }
+
+                        // Update the distance to nextNode and add it back to the set
+                        distance[nextNode] = weight + nextWeight;
+                        st.insert({distance[nextNode], nextNode});
+                    }
+                }
+            }
+
+            // Output the shortest path distances
+            for (int i = 0; i < distance.size(); i++) {
+                if (distance[i] == INT_MAX) {
+                    cout << "Distance from " << source << " to " << vertices[i].id << " - Unreachable" << endl;
+                } else {
+                    cout << "Distance from " << source << " to " << vertices[i].id << " - " << distance[i] << endl;
+                }
+            }
+
+            return distance;
+        }
+
+
 
         void printGraph(){
             for (int i{0}; i < vertices.size(); i++){
@@ -142,6 +203,8 @@ int main(){
     graph.printGraph();
     cout << "===========================" << endl;
     graph.mst('A');
+    cout << "===========================" << endl;
+    graph.shortestPath('A');
 
     return 0;
 }
